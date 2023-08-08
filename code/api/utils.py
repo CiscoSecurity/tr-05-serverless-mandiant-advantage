@@ -99,9 +99,8 @@ def get_credentials():
             token, key=key, algorithms=["RS256"], audience=[aud.rstrip("/")]
         )
 
-        assert "api_host" in payload
-        assert "api_key_id" in payload
-        assert "api_key_secret" in payload
+        assert "API_KEY" in payload
+        assert "API_SECRET" in payload
 
         return payload
     except tuple(expected_errors) as error:
