@@ -1,5 +1,7 @@
-INVALID_ARGUMENT = 'invalid argument'
-UNKNOWN = 'unknown'
+AUTH_ERROR = "authorization error"
+CONNECTION_ERROR = "connection error"
+INVALID_ARGUMENT = "invalid argument"
+UNKNOWN = "unknown"
 NOT_FOUND = 'not found'
 INTERNAL = 'internal error'
 HEALTH_CHECK_ERROR = 'health check failed'
@@ -25,3 +27,13 @@ class BadRequestError(CTRBaseError):
             INVALID_ARGUMENT,
             f'Invalid JSON payload received. {message}'
         )
+
+class AuthorizationError(CTRBaseError):
+    def __init__(self, message):
+        super().__init__(AUTH_ERROR, f"Authorization failed: {message}")
+
+
+class InvalidArgumentError(CTRBaseError):
+    def __init__(self, message):
+        super().__init__(INVALID_ARGUMENT, str(message))
+
