@@ -5,8 +5,8 @@ class Config:
     settings = json.load(open("container_settings.json", "r"))
     VERSION = settings["VERSION"]
     CTR_ENTITIES_LIMIT_DEFAULT = 100
-    API_URL = "https://api.intelligence.mandiant.com/"
-    UI_URL = "https://advantage.mandiant.com/"
+    API_URL = "https://api.intelligence.mandiant.com"
+    UI_URL = "https://advantage.mandiant.com"
 
     USER_AGENT = (
         "SecureX Threat Response Integrations "
