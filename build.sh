@@ -6,8 +6,8 @@ echo
 echo " Development Dockerfile build script."
 echo
 
-module_name="Mandiant Advantage"
-image_name="tr-05-ibm-xforce-exchange"
+module_name="Docker relay"
+image_name="tr-05-docker-relay"
 
 CONFIG_FILE=code/container_settings.json
 if [ -f $CONFIG_FILE ]; then
@@ -28,5 +28,5 @@ echo
 docker build -t "$image_name:$version" .
 
 echo
-echo "Please ensure you update module_type.json with your secret key and correct url."
+echo "Please ensure you update module_type.json with correct url."
 echo

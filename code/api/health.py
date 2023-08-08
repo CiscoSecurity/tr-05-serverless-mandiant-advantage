@@ -1,11 +1,10 @@
+from api.utils import get_credentials, jsonify_data
 from flask import Blueprint
 
-from api.utils import get_jwt, jsonify_data
-
-health_api = Blueprint('health', __name__)
+health_api = Blueprint("health", __name__)
 
 
-@health_api.route('/health', methods=['POST'])
+@health_api.route("/health", methods=["POST"])
 def health():
-    _ = get_jwt()
-    return jsonify_data({'status': 'ok'})
+    _ = get_credentials()
+    return jsonify_data({"status": "ok"})
