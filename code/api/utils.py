@@ -1,12 +1,13 @@
 import jwt
 import json
 import requests
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import ConnectionError, InvalidURL, HTTPError
 from json.decoder import JSONDecodeError
 from flask import request, jsonify
 from jwt import InvalidSignatureError, DecodeError, InvalidAudienceError
 from api.errors import BadRequestError, AuthorizationError, InvalidArgumentError
-from requests.exceptions import ConnectionError, InvalidURL, HTTPError
-
+from api.client import MandiantClient
 
 NO_AUTH_HEADER = "Authorization header is missing"
 WRONG_AUTH_TYPE = "Wrong authorization type"
@@ -122,7 +123,6 @@ def get_json(schema):
         raise InvalidArgumentError(message)
 
     return data
-
 
 def jsonify_data(data):
     return jsonify({"data": data})
