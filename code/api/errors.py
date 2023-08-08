@@ -1,3 +1,4 @@
+KEY_ERROR = "key error"
 AUTH_ERROR = "authorization error"
 CONNECTION_ERROR = "connection error"
 INVALID_ARGUMENT = "invalid argument"
@@ -37,3 +38,11 @@ class InvalidArgumentError(CTRBaseError):
     def __init__(self, message):
         super().__init__(INVALID_ARGUMENT, str(message))
 
+
+class MandiantKeyError(CTRBaseError):
+    def __init__(self):
+        super().__init__(
+            KEY_ERROR,
+            'The data structure of Mandiant Advantage has changed.'
+            ' The module is broken.'
+        )

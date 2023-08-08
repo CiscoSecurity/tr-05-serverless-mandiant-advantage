@@ -1,112 +1,103 @@
 from uuid import uuid4
-
-from flask import current_app
-
-CONFIDENCE = "High"
-SIGHTING = "sighting"
-SOURCE = "Template Threat"
-CTIM_DEFAUTLS = {"schema_version": "1.1.12"}
-
-RESOLUTION = {
-    "marked_as_benign": "allowed",
-    "not_mitigated": "detected",
-    "mitigated": "contained",
-}
-
-SIGHTING_DEFAULTS = {
-    "count": 1,
-    "internal": True,
-    "confidence": CONFIDENCE,
-    "type": SIGHTING,
-    "source": SOURCE,
-    "sensor": "Endpoint",
-    "description": "Template Detection",
-    **CTIM_DEFAUTLS,
-}
+from flask import current_app, g
 
 
-class Sighting:
-    def __init__(self, observable):
-        self.observable = observable
-
+class Mapping:
     @staticmethod
-    def _observed_time(threat):
-        return {"start_time": threat["threatInfo"]["createdAt"]}
+    def formatTime(datestamp):
+        return datestamp
+        # return datestamp.isoformat(timespec="milliseconds")
 
-    def _relations(self, threat_info):
-        return [
-            {
-                "origin": SOURCE,
-                "related": self.observable,
-                "relation": "File_Path_Of",
-                "source": {
-                    "type": "file_path",
-                    "value": threat_info["filePath"],
-                },
-            },
-            {
-                "origin": SOURCE,
-                "related": self.observable,
-                "relation": "File_Name_Of",
-                "source": {
-                    "type": "file_name",
-                    "value": threat_info["threatName"],
-                },
-            },
-        ]
-
-    @staticmethod
-    def _target_observables(realtime_agent_info):
-        observables = [
-            {
-                "type": "hostname",
-                "value": realtime_agent_info.get("agentComputerName"),
-            },
-            {
-                "type": "s1_agent_id",
-                "value": realtime_agent_info.get("agentId"),
-            },
-        ]
-
-        for interface in realtime_agent_info.get("networkInterfaces", []):
-            observables.append(
-                {"type": "mac_address", "value": interface.get("physical")}
-            )
-            observables.extend(
-                {"value": ip, "type": "ip"} for ip in interface.get("inet", [])
-            )
-            observables.extend(
-                {"value": ipv6, "type": "ipv6"}
-                for ipv6 in interface.get("inet6", [])
-            )
-        return observables
-
-    @staticmethod
-    def _source_uri(threat):
-        return (
-            f'https://{current_app.config["HOST"]}/analyze'
-            f'/threats/{threat["id"]}/overview'
-        )
-
-    def _targets(self, threat):
+    def observed_time(self, event):
+        event_time = self.formatTime(event['time'])
         return {
-            "os": threat["agentRealtimeInfo"]["agentOsName"],
-            "observed_time": self._observed_time(threat),
-            "type": "endpoint",
-            "observables": self._target_observables(
-                threat["agentRealtimeInfo"]
-            ),
+            'start_time': event_time,
+            'end_time': event_time
         }
 
-    def extract(self, threat):
-        return {
-            "id": f"transient:{SIGHTING}-{uuid4()}",
-            "observed_time": self._observed_time(threat),
-            "external_ids": [threat["id"]],
-            "observables": [self.observable],
-            "relations": self._relations(threat["threatInfo"]),
-            "resolution": RESOLUTION[threat["threatInfo"]["mitigationStatus"]],
-            "source_uri": self._source_uri(threat),
-            "targets": [self._targets(threat)],
-            **SIGHTING_DEFAULTS,
+    @staticmethod
+    def get_relations(event):
+        if ((event.get("ip_src") and event.get("ip_dst")) and
+                (event["ip_src"] != event["ip_dst"])):
+            return [
+                {
+                    "related": {
+                        "type": "ip",
+                        "value": event['ip_dst']
+                    },
+                    "source": {
+                        "type": "ip",
+                        "value": event["ip_src"]
+                    },
+                    **current_app.config['RELATIONS_DEFAULTS']
+                }
+            ]
+        else:
+            return []
+
+    def observables(self, event):
+        return g.observables
+
+    def targets(self, event):
+        observables = []
+
+        if event.get('ip_dst'):
+            observables.append({'type': 'ip',
+                                'value': event['ip_dst']})
+        if event.get('filename'):
+            observables.append({'type': 'file_name',
+                                'value': event['filename']})
+        if event.get('eth_dst'):
+            observables.append({'type': 'mac_address',
+                                'value': event['eth_dst']})
+        if event.get('username'):
+            observables.append({'type': 'user',
+                                'value': event['username']})
+        if event.get('hostname'):
+            observables.append({'type': 'hostname',
+                                'value': event['hostname']})
+
+        if not observables:
+            return []
+
+        target = {
+            'observables': observables,
+            'observed_time': self.observed_time(event),
+            'type': 'endpoint',
+        }
+
+        return [target]
+
+    def sighting(self, observable, event):
+        if event.get('packets'):
+            count = event['packets']
+        else:
+            count = 1
+
+        link_keys = ["ip.src", "ip.dst", "alias.host"]
+        mapping_str = []
+        for item in event:
+            if item in link_keys:
+                mapping_str.append(
+                    "{}: [{}](/investigate?q={})\n".format(item, event[item], event[item]))
+            else:
+                mapping_str.append("{}: {}\n".format(item, event[item]))
+
+        metadata = "- ".join(mapping_str)
+
+        d = {
+            'id': f'sighting-{uuid4()}',
+            'targets': self.targets(event),
+            'relations': self.get_relations(event),
+            'count': int(count),
+            'observed_time': self.observed_time(event),
+            'observables': self.observables(event),
+            'short_description':
+                f"RSA Netwitness session ID {event['sessionid']} ({event['netname']})",
+            'description': 'RSA Netwitness session ID '
+                           f'{event["sessionid"]} retrieved from decoder '
+                           f'{event["did"]} related to '
+                           f'{observable["value"]}'
+                           f'\n\nNetWitness Mapped Values:\n- {metadata}\n\n',
+            **current_app.config['SIGHTING_DEFAULTS']
         }
