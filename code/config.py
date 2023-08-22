@@ -13,4 +13,4 @@ class Config:
         "<tr-integrations-support@cisco.com>"
     )
 
-    TYPES_FORMATS = ("sha1", "md5", "sha256", "ip", "ipv6", "url", "hostname", "process_name", "filename")
+    TYPES_FORMATS = ("hostname", "md5", "sha256", "ip", "ipv4", "url")
