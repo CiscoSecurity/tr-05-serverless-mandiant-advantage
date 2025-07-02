@@ -1,3 +1,4 @@
+from api.errors import WatchdogError
 from flask import request, Blueprint
 
 from api.utils import jsonify_data

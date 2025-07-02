@@ -31,21 +31,29 @@ def observe_observables():
     credentials = get_credentials()
     observables = get_observables()
 
-    ui_url = current_app.config['UI_URL']
-            
-    limit = credentials.get('CTR_ENTITIES_LIMIT_DEFAULT') or current_app.config['CTR_ENTITIES_LIMIT_DEFAULT']
-    client = MandiantClient(current_app.config['API_URL'], credentials, current_app.config['USER_AGENT'], limit)
+    ui_url = current_app.config["UI_URL"]
+
+    limit = (
+        credentials.get("CTR_ENTITIES_LIMIT_DEFAULT")
+        or current_app.config["CTR_ENTITIES_LIMIT_DEFAULT"]
+    )
+    client = MandiantClient(
+        current_app.config["API_URL"],
+        credentials,
+        current_app.config["USER_AGENT"],
+        limit,
+    )
 
     try:
         for observable in observables:
-            search_resp = client.do_search(observable['value'])
-            objects = search_resp.get('objects')
+            search_resp = client.do_search(observable["value"])
+            objects = search_resp.get("objects")
 
             threat_actors = []
             for object in objects:
-                malwares = object.get('malwares')
-                threat_actors.append(client.do_actors(object.get('actors')))
-                mscore = object.get('mscore')
+                malwares = object.get("malwares")
+                threat_actors.append(client.do_actors(object.get("actors")))
+                mscore = object.get("mscore")
 
             print(threat_actors)
 

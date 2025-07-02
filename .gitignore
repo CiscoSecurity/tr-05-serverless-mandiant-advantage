@@ -4,6 +4,9 @@
 # PyCharm
 .idea/
 
+#VsCode
+.vscode/
+
 # Python
 __pycache__/
 venv/
@@ -13,3 +16,6 @@ venv/
 
 # config
 workflow/config.py
+
+# tests
+.coverage

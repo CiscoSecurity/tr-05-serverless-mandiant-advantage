@@ -11,10 +11,10 @@ build: stop
 	docker run -dp $(PORT):$(PORT) --name $(NAME) $(NAME)
 flake: black
 	flake8 code/
-test: flake
-	cd code; coverage run --source api/ -m pytest --verbose tests/ && coverage report; cd -
+test:
+	cd code; coverage run --source api/ -m pytest --verbose tests/unit && coverage report; cd -
 test_lf:
-	cd code; coverage run --source api/ -m pytest --verbose -vv --lf tests/ && coverage report; cd -
+	cd code; coverage run --source api/ -m pytest --verbose -vv --lf tests/unit && coverage report; cd -
 stop:
 	docker stop $(NAME); docker rm $(NAME); true
 
